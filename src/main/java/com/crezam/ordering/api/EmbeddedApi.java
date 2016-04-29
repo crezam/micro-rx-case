@@ -1,26 +1,33 @@
 package com.crezam.ordering.api;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.ext.web.Router;
+
 import java.util.Random;
 
 public class EmbeddedApi {
 
     public static void main(String[] args) {
-        Vertx.vertx()
-                .createHttpServer()
-                .requestHandler(req -> req.response().end(Integer.toString(mockPrice())))
-                .listen(8080, handler -> {
-                    if (handler.succeeded()) {
-                        System.out.println("OK");
-                    } else {
-                        System.err.println("Alert");
-                    }
-                });
+
+        Vertx vertx = Vertx.vertx();
+
+        HttpServer server = vertx.createHttpServer();
+        Router router = Router.router(vertx);
+
+        router.route("/price").handler(routingContext -> {
+            HttpServerResponse response = routingContext.response();
+            response.putHeader("content-type", "application/json");
+            response.end(mockPriceDoc());
+        });
+
+        server.requestHandler(router::accept).listen(8080);
     }
 
-    private static int mockPrice() {
+    private static String mockPriceDoc() {
         Random r = new Random();
-        return r.nextInt(1000);
+        return "{ \"price\":" + r.nextInt(1000) + " }";
     }
 
 }
